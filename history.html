@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Pembayaran</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #050816; color: #fff; padding: 20px; display: flex; justify-content: center; }
+        .card { background: #0f172a; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid #333; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; outline: none; }
+        .btn { background: #38bdf8; color: #000; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; }
+        .result-box { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #444; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .success { color: #10b981; }
+        .pending { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h3 style="text-align:center;">🔍 Detail Transaksi</h3>
+        <input type="text" id="oid" placeholder="Order ID (RE-xxx)">
+        <input type="number" id="amt" placeholder="Nominal (Misal: 500)">
+        <button class="btn" onclick="fetchDetail()">CEK STATUS</button>
+
+        <div id="resBox" class="result-box">
+            <div class="row"><span>Status:</span> <b id="stts"></b></div>
+            <div class="row"><span>Order ID:</span> <span id="r_id"></span></div>
+            <div class="row"><span>Nominal:</span> <span id="r_amt"></span></div>
+            <div class="row"><span>Metode:</span> <span>QRIS</span></div>
+            <button class="btn" style="background:#444; color:#fff;" onclick="window.location.href='index.html'">Kembali</button>
+        </div>
+    </div>
+
+<script>
+    const BACKEND_BASE_URL = "https://bahlilitem.vercel.app/";
+
+    // Auto-cek jika ada parameter dari redirect
+    const p = new URLSearchParams(window.location.search);
+    if(p.has('id')) {
+        document.getElementById('oid').value = p.get('id');
+        document.getElementById('amt').value = p.get('amount');
+        fetchDetail();
+    }
+
+    async function fetchDetail() {
+        const id = document.getElementById('oid').value;
+        const amount = document.getElementById('amt').value;
+        if(!id || !amount) return alert("Lengkapi data!");
+
+        try {
+            // SINKRON: GET ke transaction-detail.js
+            const res = await fetch(`${BACKEND_BASE_URL}api/transaction-detail?order_id=${id}&amount=${amount}`);
+            const json = await res.json();
+            
+            if(json.data) {
+                const d = json.data;
+                document.getElementById('resBox').style.display = "block";
+                document.getElementById('r_id').innerText = id;
+                document.getElementById('r_amt').innerText = "Rp " + d.amount;
+                document.getElementById('stts').innerText = d.status.toUpperCase();
+                document.getElementById('stts').className = d.status === "success" || d.status === "paid" ? "success" : "pending";
+            } else {
+                alert("Data tidak ditemukan.");
+            }
+        } catch(e) { alert("Server Error"); }
+    }
+</script>
+</body>
+</html>
